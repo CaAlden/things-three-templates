@@ -1,0 +1,20 @@
+# Basic type of template
+type: project
+description: Describe the type of template here
+
+area: null # Area to place the project into in Things 3
+title: Title
+notes: null
+tags: []
+todos: []
+
+# Time specific concerns
+when: null
+deadline: null
+creation_date: null
+completion_date: null
+
+# Unlikely to be used but these options exist
+completed: false
+canceled: false
+reveal: true # Shows the value in Things 3 after it is created
