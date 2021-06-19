@@ -65,11 +65,11 @@ if ARGS.template:
     try:
         with open(os.path.join(TEMPLATE_PATH, ARGS.template + '.yml'), 'r') as infile:
             settings = yaml.load(infile, Loader=yaml.FullLoader)
+            createThings3Template(settings, ARGS)
     except Exception as e:
         print('Could not load template for "{}"'.format(ARGS.title))
         print(e)
 
-    createThings3Template(settings, ARGS)
 elif ARGS.options:
     print('\n'.join(getTemplateOptions()))
 else:
