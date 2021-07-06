@@ -11,6 +11,10 @@ parser.add_argument('--title', help='Override the title field in the template')
 parser.add_argument('--notes', help='Override the notes field in the template')
 parser.add_argument('--deadline', help='Override the deadline field in the template')
 parser.add_argument('--when', help='Override the when field in the template')
+parser.add_argument('--todo-template', help='A custom todo template string to be used in place of todo items')
+parser.add_argument('--todo-start', help='Overrides a template todo start value', type=int)
+parser.add_argument('--todo-end', help='Overrides a template todo end value', type=int)
+parser.add_argument('--todo-step', help='Overrides a template todo step value', type=int)
 
 
 def formatFiles(tup):
@@ -29,7 +33,24 @@ def getTemplateOptions():
             descriptions.append(s['description'] if 'description' in s else None)
     return list(map(formatFiles, zip(files, descriptions)))
 
+def renderTodos(todosRaw, args):
+    if isinstance(todosRaw, list):
+        return todosRaw
+    else:
+        step = args.todo_step if args.todo_step is not None else todosRaw['step']
+        start = args.todo_start if args.todo_start is not None else todosRaw['start']
+        end = args.todo_end if args.todo_end is not None else todosRaw['end']
+        template = args.todo_template if args.todo_template is not None else todosRaw['template']
+        unrolled = [template.format(i, i + step - 1) for i in range(start, end, step)]
+        remaining = ((end + 1) - start) % step
+        if remaining > 0:
+            unrolled.append(template.format((end + 1) - remaining, end))
+        if step == 1:
+            unrolled.append(template.format(end, end))
+        return unrolled
+
 def createThings3Project(template, args):
+    renderedTemplateTodos = renderTodos(template['todos'], args)
     projectTemplate = {
         'title': args.title if args.title is not None else template['title'],
         'notes': args.notes if args.notes is not None else template['notes'],
@@ -37,7 +58,7 @@ def createThings3Project(template, args):
         'when': args.when if args.when is not None else template['when'],
         'tags': ','.join(template['tags']),
         'deadline': args.deadline if args.deadline is not None else template['deadline'],
-        'to-dos': '\n'.join(template['todos']),
+        'to-dos': '\n'.join(renderedTemplateTodos),
         'completed': template['completed'],
         'canceled': template['canceled'],
         'reveal': template['reveal'],
