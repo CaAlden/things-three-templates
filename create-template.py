@@ -38,15 +38,16 @@ def renderTodos(todosRaw, args):
         return todosRaw
     else:
         step = args.todo_step if args.todo_step is not None else todosRaw['step']
+        step -= 1
         start = args.todo_start if args.todo_start is not None else todosRaw['start']
         end = args.todo_end if args.todo_end is not None else todosRaw['end']
         template = args.todo_template if args.todo_template is not None else todosRaw['template']
-        unrolled = [template.format(i, i + step - 1) for i in range(start, end, step)]
-        remaining = ((end + 1) - start) % step
-        if remaining > 0:
-            unrolled.append(template.format((end + 1) - remaining, end))
-        if step == 1:
-            unrolled.append(template.format(end, end))
+        unrolled = []
+        while start + step < end:
+            unrolled.append(template.format(start, start + step))
+            start += step + 1
+        if start <= end:
+            unrolled.append(template.format(start, end))
         return unrolled
 
 def createThings3Project(template, args):
@@ -79,19 +80,19 @@ def createThings3Template(template, args):
     else:
         raise Exception('Unknown template type: {}'.format(template.type))
 
+if __name__ == '__main__':
+    ARGS = parser.parse_args()
 
-ARGS = parser.parse_args()
+    if ARGS.template:
+        try:
+            with open(os.path.join(TEMPLATE_PATH, ARGS.template + '.yml'), 'r') as infile:
+                settings = yaml.load(infile, Loader=yaml.FullLoader)
+                createThings3Template(settings, ARGS)
+        except Exception as e:
+            print('Could not load template for "{}"'.format(ARGS.title))
+            print(e)
 
-if ARGS.template:
-    try:
-        with open(os.path.join(TEMPLATE_PATH, ARGS.template + '.yml'), 'r') as infile:
-            settings = yaml.load(infile, Loader=yaml.FullLoader)
-            createThings3Template(settings, ARGS)
-    except Exception as e:
-        print('Could not load template for "{}"'.format(ARGS.title))
-        print(e)
-
-elif ARGS.options:
-    print('\n'.join(getTemplateOptions()))
-else:
-    parser.print_help()
+    elif ARGS.options:
+        print('\n'.join(getTemplateOptions()))
+    else:
+        parser.print_help()
