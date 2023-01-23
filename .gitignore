@@ -1,2 +1,2 @@
 templates/*.yml
-run.sh
+*.sh
