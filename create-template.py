@@ -1,6 +1,7 @@
 import argparse
 import yaml
 import os
+import sys
 from urllib.parse import urlencode, quote
 import webbrowser
 
@@ -15,6 +16,7 @@ parser.add_argument('--todo-template', help='A custom todo template string to be
 parser.add_argument('--todo-start', help='Overrides a template todo start value', type=int)
 parser.add_argument('--todo-end', help='Overrides a template todo end value', type=int)
 parser.add_argument('--todo-step', help='Overrides a template todo step value', type=int)
+parser.add_argument('--tags', help="explicit tags for this template", type=str)
 
 
 def formatFiles(tup):
@@ -71,9 +73,30 @@ def createThings3Project(template, args):
     if not success:
         print('Failed to create new project')
 
+def add_if_present(d, args, key, name):
+    val = getattr(args, name)
+    if val:
+        d[key] = val
+
+def createThings3Task(template, args):
+    values = {
+        'title': args.title if args.title is not None else template['title'],
+        'notes': args.notes if args.notes is not None else template['notes'],
+        'when': args.when if args.when is not None else template['when'],
+        'tags': args.tags if args.tags is not None else ','.join(template['tags']),
+        'reveal': template['reveal'],
+        'area': template['area'],
+    }
+    params = urlencode({ k: v for k, v in values.items() if v is not None }, quote_via=quote)
+    url = f'things:///add?{params}'
+    success = webbrowser.open_new_tab(url)
+    if not success:
+        print('Failed to create new task')
+
 def createThings3Template(template, args):
     supportedTypes = {
         'project': createThings3Project,
+        'task': createThings3Task,
     }
     if template['type'] in supportedTypes:
         return supportedTypes[template['type']](template, args)
@@ -87,10 +110,13 @@ if __name__ == '__main__':
         try:
             with open(os.path.join(TEMPLATE_PATH, ARGS.template + '.yml'), 'r') as infile:
                 settings = yaml.load(infile, Loader=yaml.FullLoader)
-                createThings3Template(settings, ARGS)
         except Exception as e:
             print('Could not load template for "{}"'.format(ARGS.title))
             print(e)
+            sys.exit(1)
+
+        createThings3Template(settings, ARGS)
+
 
     elif ARGS.options:
         print('\n'.join(getTemplateOptions()))
