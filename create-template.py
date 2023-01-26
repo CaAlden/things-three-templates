@@ -85,7 +85,7 @@ def createThings3Task(template, args):
         'when': args.when if args.when is not None else template['when'],
         'tags': args.tags if args.tags is not None else ','.join(template['tags']),
         'reveal': template['reveal'],
-        'area': template['area'],
+        'list-id': template['area'],
     }
     params = urlencode({ k: v for k, v in values.items() if v is not None }, quote_via=quote)
     url = f'things:///add?{params}'
